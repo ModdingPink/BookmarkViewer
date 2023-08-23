@@ -1,6 +1,6 @@
 ﻿<bg id='root' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'>
 	<settings-container>
-		<clickable-text align='Left' text='Stick Drift Settings' highlight-color='FFF'  italics='true'></clickable-text>
+		<clickable-text align='Left' text='Bookmark Viewer Settings' highlight-color='FFF'  italics='true'></clickable-text>
 		<toggle-setting text='Enable Mod' apply-on-change='true' value='enabled'></toggle-setting>
 		
 		<toggle-setting text='Enable Bookmark Snapping' apply-on-change='true' value='snap'></toggle-setting>
