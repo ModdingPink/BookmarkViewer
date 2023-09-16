@@ -147,14 +147,21 @@ namespace BookmarkViewer.Patches
 
                     if (mapData != null)
                     {
+                        var bookmarksUseBpmEvents = mapData.version2_6_0AndEarlier
+                            ? mapData.customData.Get<bool?>("_bookmarksUseOfficialBpmEvents")
+                            : mapData.customData.Get<bool?>("bookmarksUseOfficialBpmEvents");
+
                         var bookmarkList = mapData.customData.Get<List<object>>(mapData.version2_6_0AndEarlier ? "_bookmarks" : "bookmarks")?.Cast<CustomData>();
                         if (bookmarkList != null)
                         {
                             foreach (var bookmarkItem in bookmarkList)
-                            {
+                            { 
                                 var bookmark = new Bookmark();
 
-                                bookmark.timeInSeconds = BeatsToSeconds(level.beatsPerMinute, bookmarkItem.Get<float>(mapData.version2_6_0AndEarlier ? "_time" : "b"));
+                                var bookmarkBeat = bookmarkItem.Get<float>(mapData.version2_6_0AndEarlier ? "_time" : "b");
+                                bookmark.timeInSeconds = (bookmarksUseBpmEvents == true)
+                                    ? BeatsToSecondsWithBpmEvents(level.beatsPerMinute, bookmarkBeat, mapData.bpmEvents)
+                                    : BeatsToSeconds(level.beatsPerMinute, bookmarkBeat);
                                 bookmark.name = bookmarkItem.Get<string>(mapData.version2_6_0AndEarlier ? "_name" : "n");
 
                                 List<object>? colorArray = bookmarkItem.Get<List<object>>(mapData.version2_6_0AndEarlier ? "_color" : "c");
@@ -230,6 +237,26 @@ namespace BookmarkViewer.Patches
             public static float BeatsToSeconds(float bpm, float beat)
             {
                 return (60.0f / bpm) * beat;
+            }
+
+            private static float BeatsToSecondsWithBpmEvents(float levelBpm, float beat, IList<BeatmapSaveDataVersion3.BeatmapSaveData.BpmChangeEventData> bpmEvents)
+            {
+                // Start with level bpm if the bpm at beat 0 is missing for some reason
+                var defaultBpmEvent = new BeatmapSaveDataVersion3.BeatmapSaveData.BpmChangeEventData(0, levelBpm);
+                var bpmEventsBeforeBookmark = new List<BeatmapSaveDataVersion3.BeatmapSaveData.BpmChangeEventData> { defaultBpmEvent };
+                bpmEventsBeforeBookmark.AddRange(bpmEvents.Where(x => x.beat <= beat));
+
+                var timeInSeconds = 0f;
+                for (var i = 0; i < bpmEventsBeforeBookmark.Count - 1; i++)
+                {
+                    var bpmEvent = bpmEventsBeforeBookmark[i];
+                    var nextBpmEvent = bpmEventsBeforeBookmark[i + 1];
+
+                    var timeDiff = nextBpmEvent.beat - bpmEvent.beat;
+                    timeInSeconds += timeDiff * (60f / bpmEvent.bpm);
+                }
+                timeInSeconds += (beat - bpmEventsBeforeBookmark.Last().beat) * (60f / bpmEventsBeforeBookmark.Last().bpm);
+                return timeInSeconds;
             }
 
             static float GetBookmarkXPosition(float time, IBeatmapLevel level)
