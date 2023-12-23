@@ -4,15 +4,11 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Assets\**" />
-    <EmbeddedResource Remove="Assets\**" />
-    <None Remove="Assets\**" />
-  </ItemGroup>
-  <ItemGroup>
     <Compile Remove="Installers\WarmupInstaller.cs" />
     <Compile Remove="Program.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="Assets\Bookmark.png" />
     <None Remove="Installers\ADGameInstaller" />
     <None Remove="Installers\GameInstaller" />
     <None Remove="Installers\NewFile1.txt" />
@@ -22,12 +18,23 @@
     <None Remove="UI\NewFile1.txt" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Assets\Bookmark.png" />
     <EmbeddedResource Include="manifest.json" />
     <EmbeddedResource Include="UI\Menu.bsml" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="BGLib.UnityExtension">
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\BGLib.UnityExtension.dll</HintPath>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="BS_Utils">
       <HintPath>$(BeatSaberDir)\Plugins\BS_Utils.dll</HintPath>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="Camera2">
+      <HintPath>$(BeatSaberDir)\Plugins\Camera2.dll</HintPath>
       <Private>False</Private>
       <SpecificVersion>False</SpecificVersion>
     </Reference>

@@ -14,10 +14,24 @@ using UnityEngine.UI;
 
 namespace BookmarkViewer.Patches
 {
-    internal class BookmarkPatches
+
+    //This is only because I want the mod to be version cross compatible.
+    //Replace with ColorWithAlpha in future, this was separated into a new lib for 1.3X and caused a reference error
+    public static class ColourExtension
+    {
+        public static Color SetAlpha(this Color color, float alpha)
+        {
+            color.a = alpha;
+            return color;
+        }
+    }
+
+    internal class BookmarkPatches 
     {
         static float _minX;
         static float _maxX;
+
+        static Graphic handleGraphic;
 
         static List<Graphic> _graphicsPool = new List<Graphic>();
         static CurvedTextMeshPro _currentBookmarkText = null;
@@ -61,14 +75,14 @@ namespace BookmarkViewer.Patches
             Bookmark? bookmark = _bookmarks.FindLast(b => b.timeInSeconds <= value);
             if (_currentBookmark != null){
                 if(_currentBookmark.graphic != null){
-                    _currentBookmark.graphic.color = _currentBookmark.color.ColorWithAlpha(0.7f);
+                    _currentBookmark.graphic.color = _currentBookmark.color.SetAlpha(0.7f);
                     _currentBookmark.graphic.transform.localScale = _bookmarkGraphicScale;
                 }
             }
             _currentBookmark = bookmark;
             if (bookmark != null) {
                 if (bookmark.graphic != null) {
-                    bookmark.graphic.color = bookmark.color.ColorWithAlpha(0.9f);
+                    bookmark.graphic.color = bookmark.color.SetAlpha(0.9f);
                     bookmark.graphic.transform.localScale = Vector3.Scale(_bookmarkGraphicScale, new Vector3(1, 1.15f, 1));
                 }
             }
@@ -125,14 +139,24 @@ namespace BookmarkViewer.Patches
                 } 
 
                 TimeSlider slider = __instance.GetField<TimeSlider, PracticeViewController>("_songStartSlider");
-                Graphic handleGraphic = slider.GetField<Graphic, TextSlider>("_handleGraphic");
+
+                var sliderGraphic = slider.GetField<Graphic, TextSlider>("_handleGraphic");
+
+                if(handleGraphic == null)
+                {
+                    handleGraphic = GameObject.Instantiate(sliderGraphic);
+                    GameObject.DontDestroyOnLoad(handleGraphic.gameObject);
+                }
+
+                handleGraphic.transform.rotation = Quaternion.Euler(0, 0, Config.Instance.UnskewBookmarks ? 5 : 0);
+
 
                 SetupNameText(slider);
-                GetSliderMinMax(slider, handleGraphic);
+                GetSliderMinMax(slider, sliderGraphic);
 
                 ObtainBookmarksFromLevel(____level, ____beatmapCharacteristic, ____beatmapDifficulty);
 
-                SetBookmarkVisuals(handleGraphic, ____level);
+                SetBookmarkVisuals(sliderGraphic.transform, ____level);
                 GetCurrentBookmark(slider.value - ____level.songDuration / 100);
                 UpdateTextValue();
             }
@@ -183,7 +207,7 @@ namespace BookmarkViewer.Patches
                 _bookmarks.OrderBy(b => b.timeInSeconds);
             }
 
-            static void SetBookmarkVisuals(Graphic handleGraphic, IBeatmapLevel level)
+            static void SetBookmarkVisuals(Transform sliderGraphicTransform, IBeatmapLevel level)
             {
                 int item = 0;
                 foreach(Bookmark bookmarkItem in _bookmarks)
@@ -197,13 +221,13 @@ namespace BookmarkViewer.Patches
                     }
                     else
                     {
-                        bookmark = GameObject.Instantiate(handleGraphic, handleGraphic.transform.parent);
+                        bookmark = GameObject.Instantiate(handleGraphic, sliderGraphicTransform.parent);
                         _graphicsPool.Add(bookmark);
                     }
                     bookmarkItem.graphic = bookmark;
                     bookmark.transform.localScale = _bookmarkGraphicScale;
-                    bookmark.transform.position = new Vector3(GetBookmarkXPosition(bookmarkItem.timeInSeconds, level), handleGraphic.transform.position.y, handleGraphic.transform.position.z);
-                    bookmark.color = bookmarkItem.color.ColorWithAlpha(0.75f);
+                    bookmark.transform.position = new Vector3(GetBookmarkXPosition(bookmarkItem.timeInSeconds, level), sliderGraphicTransform.position.y, sliderGraphicTransform.position.z);
+                    bookmark.color = bookmarkItem.color.SetAlpha(0.75f);
                     item++;
                 }
             }
@@ -222,15 +246,15 @@ namespace BookmarkViewer.Patches
 
 
 
-            static void GetSliderMinMax(TimeSlider slider, Graphic handleGraphic)
+            static void GetSliderMinMax(TimeSlider slider, Graphic sliderGraphic)
             {
                 var value = slider.value;
                 slider.value = slider.maxValue;
-                _maxX = handleGraphic.transform.position.x + (Math.Abs(1 - Config.Instance.BookmarkWidthSize) * 0.05f);
+                _maxX = sliderGraphic.transform.position.x + (Math.Abs(1 - Config.Instance.BookmarkWidthSize) * 0.05f);
                 slider.value = slider.minValue;
-                _minX = handleGraphic.transform.position.x;
+                _minX = sliderGraphic.transform.position.x;
                 slider.value = value;
-                _bookmarkGraphicScale = Vector3.Scale(handleGraphic.transform.localScale, new Vector3(Config.Instance.BookmarkWidthSize, 1, 1));
+                _bookmarkGraphicScale = Vector3.Scale(sliderGraphic.transform.localScale, new Vector3(Config.Instance.BookmarkWidthSize, 1, 1));
             }
 
 

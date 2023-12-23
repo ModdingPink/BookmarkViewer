@@ -33,6 +33,16 @@ namespace BookmarkViewer.UI
             {
                 Config.Instance.SnapToBookmark = value;
             }
+
+        }           
+        [UIValue("skew")]
+        public bool UnskewBookmarks
+        {
+            get => Config.Instance.UnskewBookmarks;
+            set
+            {
+                Config.Instance.UnskewBookmarks = value;
+            }
         }        
         
         [UIValue("width")]
